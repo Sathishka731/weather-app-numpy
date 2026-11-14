@@ -1,26 +1,17 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from app.ai import call_model
 
-# 1. Initialize the application
 app = FastAPI()
 
-# 2. Define a data schema using Pydantic
-class Item(BaseModel):
-    name: str
-    price: float
-    is_offer: bool | None = None
 
-# 3. Create a GET endpoint (Read)
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to FastAPI"}
+class ChatRequest(BaseModel):
+     message: str
 
-# 4. Create a GET endpoint with path parameters
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str | None = None):
-    return {"item_id": item_id, "query_param": q}
+class ChatResponse(BaseModel):
+    reply:str
 
-# 5. Create a POST endpoint (Create)
-@app.post("/items/")
-def create_item(item: Item):
-    return {"message": "Item created successfully", "data": item}
+@app.post("/chat", response_model=ChatResponse)
+async def chat(request: ChatRequest):
+    reply = await call_model(request.message)
+    return ChatResponse(reply=reply)
